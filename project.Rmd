@@ -1,0 +1,71 @@
+---
+title: "Machine Learning Project"
+author: "Ryan"
+date: "Sunday, April 26, 2015"
+output: html_document
+---
+
+I begin by reading in the two provided datasets then identifying the variables desired to build the predictive model.  I went through the csv and pared down the variables to a total of 51 that were consistently populated across all observations.  I then used the cross validation method over 4 iterations in the training model by using the traincontrol function in caret.  This provides us with the opportunity to examine cross validation metrics later on in the process.  The training model itself uses the random forest method to allow for intuitive visualization of results.
+
+```{r}
+library(caret)
+library(rattle)
+library(AppliedPredictiveModeling)
+library(rpart)
+library(pgmm)
+library(ElemStatLearn)
+library(gtools)
+
+training = read.csv("pml-training-sub.csv")
+as.factor(training$classe)
+testing = read.csv("pml-testing.csv")
+as.factor(testing$classe)
+
+set.seed(42)
+
+trControl = trainControl(method="cv", number=4)
+model = train(classe ~., method="rf", na.action=na.omit,
+              trControl=trControl, data=training)
+
+jpeg(file = "treeplot.jpg")
+plot(model$finalModel,main="Classification")
+text(model$finalModel, use.n=TRUE, all=TRUE, cex=0.8)
+dev.off()
+```
+
+I can now plot the random forest results to visualize the errors:
+
+```{r, echo=FALSE}
+plot(model$finalModel, uniform=TRUE, main="Classification")
+text(model$finalModel, use.n=TRUE, all=TRUE, cex=0.8)
+```
+
+Now I take a look at the accuracy of the model and look at the cross validation results:
+
+```{r}
+model
+print(model$finalModel)
+
+```
+
+The model is broken down into the four cross validation models within the training dataset.  Accuracies of the cross validated models are around 99% or better.  The confusion matrix in the final selected model are all less than a percent, with an 0.8% maximum confusion on classification "D".
+
+Now we look at the predictions our model makes using the 20 observations in the testing data:
+
+```{r}
+preds = predict(model, testing)
+preds
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
