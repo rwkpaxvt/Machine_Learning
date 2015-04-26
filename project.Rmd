@@ -7,7 +7,7 @@ output: html_document
 
 I begin by reading in the two provided datasets then identifying the variables desired to build the predictive model.  I went through the csv and pared down the variables to a total of 51 that were consistently populated across all observations.  I then used the cross validation method over 4 iterations in the training model by using the traincontrol function in caret.  This provides us with the opportunity to examine cross validation metrics later on in the process.  The training model itself uses the random forest method to allow for intuitive visualization of results.
 
-```{r}
+```{r, echo=FALSE, warning=FALSE, error=FALSE, message=FALSE, results='hold'}
 library(caret)
 library(rattle)
 library(AppliedPredictiveModeling)
@@ -15,11 +15,21 @@ library(rpart)
 library(pgmm)
 library(ElemStatLearn)
 library(gtools)
+library(lattice)
+library(ggplot2)
+library(randomForest)
 
 training = read.csv("pml-training-sub.csv")
-as.factor(training$classe)
+#as.factor(training$classe)
+#trainIndex = createDataPartition(training$classe, p = 1,list=FALSE)
+#trainsub = training[trainIndex,]
+#as.factor(trainsub$classe)
 testing = read.csv("pml-testing.csv")
-as.factor(testing$classe)
+#as.factor(testing$classe)
+
+```
+
+```{r,warning=FALSE, error=FALSE, message=FALSE}
 
 set.seed(42)
 
@@ -29,36 +39,44 @@ model = train(classe ~., method="rf", na.action=na.omit,
 
 jpeg(file = "treeplot.jpg")
 plot(model$finalModel,main="Classification")
-text(model$finalModel, use.n=TRUE, all=TRUE, cex=0.8)
+#text(model$finalModel, use.n=TRUE, all=TRUE, cex=0.8)
 dev.off()
 ```
 
 I can now plot the random forest results to visualize the errors:
 
 ```{r, echo=FALSE}
-plot(model$finalModel, uniform=TRUE, main="Classification")
-text(model$finalModel, use.n=TRUE, all=TRUE, cex=0.8)
+plot(model$finalModel, main="Classification")
+#text(model$finalModel, use.n=TRUE, all=TRUE, cex=0.8)
 ```
 
 Now I take a look at the accuracy of the model and look at the cross validation results:
 
-```{r}
+```{r,warning=FALSE, error=FALSE, message=FALSE}
 model
 print(model$finalModel)
 
 ```
 
-The model is broken down into the four cross validation models within the training dataset.  Accuracies of the cross validated models are around 99% or better.  The confusion matrix in the final selected model are all less than a percent, with an 0.8% maximum confusion on classification "D".
+The model is broken down into the four cross validation models within the training dataset.  Accuracies of the cross validated models are around 99% or better.  The confusion matrix in the final selected model are all less than a percent, with an 0.8% maximum confusion on classification "D".  With error rates this low, I decided to stick with this method of training to make the predictions.
 
-Now we look at the predictions our model makes using the 20 observations in the testing data:
+Now we look at the predictions our model makes using the 20 observations in the testing data and write them out as individual text files:
 
-```{r}
+```{r,warning=FALSE, error=FALSE, message=FALSE}
 preds = predict(model, testing)
 preds
 
+pml_write_files = function(x){
+     n = length(x)
+     for(i in 1:n){
+         filename = paste0("problem_id_",i,".txt")
+         write.table(x[i],file=filename,quote=FALSE,row.names=FALSE,col.names=FALSE)
+     }
+ }
+pml_write_files(preds)
 ```
 
-
+All test cases were accurately predicted by the chosen model.
 
 
 
